@@ -98,15 +98,12 @@ class DeviceConnector:
                 self._session = self.device.attach(target)
             else:
                 self.logger.info("CORE", f"Attaching to {target}...")
-                try:
+                pid = self._resolve_package_pid(target)
+                if pid:
+                    self.logger.info("CORE", f"Resolved {target} to PID {pid}")
+                    self._session = self.device.attach(pid)
+                else:
                     self._session = self.device.attach(target)
-                except frida.ProcessNotFoundError:
-                    pid = self._resolve_package_pid(target)
-                    if pid:
-                        self.logger.info("CORE", f"Resolved {target} to PID {pid}")
-                        self._session = self.device.attach(pid)
-                    else:
-                        raise
             return self._session
         except frida.ProcessNotFoundError:
             raise ProcessNotFoundError(
