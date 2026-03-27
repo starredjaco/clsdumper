@@ -28,8 +28,10 @@ classifiers = [
 dependencies = [
     "frida>=16.0.0",
     "frida-tools>=12.0.0",
-    "androguard>=4.0.0",
 ]
+
+[project.optional-dependencies]
+extract = ["androguard>=4.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/TheQmaks/clsdumper"

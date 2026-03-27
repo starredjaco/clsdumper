@@ -51,8 +51,18 @@ class ClassExtractor:
                 if clean_name.startswith("L") and clean_name.endswith(";"):
                     clean_name = clean_name[1:-1]
 
+                # Sanitize: prevent path traversal via malicious class names
+                clean_name = clean_name.replace("\\", "/")
+                parts = [p for p in clean_name.split("/") if p and p != ".."]
+                clean_name = "/".join(parts)
+                if not clean_name:
+                    continue
+
                 # Create the class file
-                class_path = output_dir / (clean_name + ".smali")
+                class_path = (output_dir / (clean_name + ".smali")).resolve()
+                if not str(class_path).startswith(str(output_dir.resolve())):
+                    self.logger.debug("EXTRACT", f"Skipping class with unsafe path: {class_name}")
+                    continue
                 class_path.parent.mkdir(parents=True, exist_ok=True)
 
                 # Write class info (smali-like representation)

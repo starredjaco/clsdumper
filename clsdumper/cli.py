@@ -7,11 +7,6 @@ import io
 import sys
 from pathlib import Path
 
-# Fix Windows console encoding for Unicode output
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
-
 from clsdumper import __version__
 from clsdumper.dumper.dex_dumper import DexDumper
 from clsdumper.device.connector import DeviceConnector
@@ -104,8 +99,16 @@ def parse_target(target_str: str) -> str | int:
         return target_str
 
 
+def _fix_windows_encoding() -> None:
+    """Fix Windows console encoding for Unicode output."""
+    if sys.platform == "win32":
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
+
 def run_cli(args: argparse.Namespace) -> int:
     """Execute the CLI command."""
+    _fix_windows_encoding()
     logger = Logger(verbose=args.debug)
     logger.banner()
 

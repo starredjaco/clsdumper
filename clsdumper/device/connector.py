@@ -159,41 +159,38 @@ class DeviceConnector:
         import subprocess
         import time
 
-        # Get the launch activity
+        # Build adb command prefix with device serial if available
+        adb_cmd = ["adb"]
         try:
-            # Use Frida device to run shell command
-            # First try: spawn with am start via adb
-            subprocess.run(
-                ["adb", "shell", "am", "start", "-n",
-                 f"{package}/.MainActivity",
-                 "--activity-clear-task"],
-                capture_output=True, timeout=5,
-            )
+            device_id = self._device.id if self._device else None
+            if device_id:
+                adb_cmd = ["adb", "-s", device_id]
         except Exception:
             pass
 
-        # Also try monkey (works without knowing activity name)
+        # Use monkey to launch (works without knowing activity name)
         try:
             subprocess.run(
-                ["adb", "shell", "monkey", "-p", package,
+                [*adb_cmd, "shell", "monkey", "-p", package,
                  "-c", "android.intent.category.LAUNCHER", "1"],
                 capture_output=True, timeout=5,
             )
+        except FileNotFoundError:
+            self.logger.warn("CORE", "adb not found in PATH, cannot use am start fallback")
         except Exception:
             pass
 
-        # Wait for the app to start
+        # Wait for the app to start, match by package identifier
         self.logger.info("CORE", f"Waiting for {package} to start...")
         for attempt in range(30):
             time.sleep(1)
             try:
-                processes = self.device.enumerate_processes()
-                for proc in processes:
-                    if proc.name == package or package in (proc.name or ""):
-                        self.logger.info("CORE", f"Found {package} (PID {proc.pid}), attaching...")
-                        self._spawn_pid = proc.pid
-                        self._session = self.device.attach(proc.pid)
-                        return self._session
+                pid = self._resolve_package_pid(package)
+                if pid:
+                    self.logger.info("CORE", f"Found {package} (PID {pid}), attaching...")
+                    self._spawn_pid = pid
+                    self._session = self.device.attach(pid)
+                    return self._session
             except Exception:
                 continue
 

@@ -13,6 +13,7 @@ from clsdumper.dumper.message_handler import MessageHandler
 from clsdumper.extractor.class_extractor import ClassExtractor
 from clsdumper.frida.script_manager import ScriptManager
 from clsdumper.utils.exceptions import CLSDumperError
+from clsdumper.utils.formatting import format_bytes
 from clsdumper.utils.logging import Logger
 
 
@@ -171,7 +172,7 @@ class DexDumper:
         lines = [
             f"DEX files dumped:   {self.dex_manager.count}",
             f"Classes extracted:  {total_classes}",
-            f"Total size:         {_format_bytes(self.dex_manager.total_bytes)}",
+            f"Total size:         {format_bytes(self.dex_manager.total_bytes)}",
             f"Output:             {self.output_dir}",
         ]
         self.logger.tree(lines)
@@ -182,7 +183,7 @@ class DexDumper:
             files = self.dex_manager.files
             for i, f in enumerate(files):
                 prefix = "\u2514\u2500\u2500" if i == len(files) - 1 else "\u251c\u2500\u2500"
-                size_str = _format_bytes(f.size)
+                size_str = format_bytes(f.size)
                 cls_str = f", {f.class_count} classes" if f.class_count > 0 else ""
                 tree_lines.append(f"{prefix} {f.filename} ({size_str}{cls_str}) [{f.strategy}]")
             self.logger.tree(tree_lines)
@@ -197,9 +198,3 @@ class DexDumper:
             signal.signal(signal.SIGTERM, handler)
 
 
-def _format_bytes(n: int) -> str:
-    if n < 1024:
-        return f"{n} B"
-    if n < 1024 * 1024:
-        return f"{n / 1024:.1f} KB"
-    return f"{n / (1024 * 1024):.1f} MB"

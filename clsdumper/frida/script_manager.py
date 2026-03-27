@@ -58,8 +58,10 @@ class ScriptManager:
             self.logger.warn("AGENT", f"RPC configure failed: {e}")
 
     def trigger_run(self) -> None:
-        """Trigger strategy execution. Call AFTER resume() in spawn mode."""
-        self._script.post({"type": "run"})
+        """Trigger strategy execution. Called BEFORE resume() in spawn mode
+        so hooks are installed while the process is still frozen."""
+        if self._script:
+            self._script.post({"type": "run"})
 
     def stop(self) -> None:
         """Send stop signal to the agent."""

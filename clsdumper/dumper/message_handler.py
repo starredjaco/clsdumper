@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 from typing import Any, Callable
 
+from clsdumper.utils.formatting import format_bytes
 from clsdumper.utils.logging import Logger
 
 
@@ -82,7 +83,7 @@ class MessageHandler:
             self.logger.info("AGENT", payload.get("message", ""))
 
     def _handle_dex_found(self, payload: dict, data: bytes | None) -> None:
-        if data is None:
+        if not data:
             return
 
         # Deduplicate by SHA-256 on host side
@@ -99,7 +100,7 @@ class MessageHandler:
         size = len(data)
         self.logger.info(
             "DUMP",
-            f"DEX #{self.dex_count}: {_format_bytes(size)} [{strategy}]"
+            f"DEX #{self.dex_count}: {format_bytes(size)} [{strategy}]"
         )
 
         # Pass sha256 to callbacks to avoid recomputation
@@ -152,9 +153,3 @@ class MessageHandler:
                 self.logger.error("STRATEGY", f"Status callback error: {e}")
 
 
-def _format_bytes(n: int) -> str:
-    if n < 1024:
-        return f"{n} B"
-    if n < 1024 * 1024:
-        return f"{n / 1024:.1f} KB"
-    return f"{n / (1024 * 1024):.1f} MB"

@@ -7,6 +7,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from clsdumper import __version__
 from clsdumper.utils.logging import Logger
 
 
@@ -81,7 +82,7 @@ class DexDumpManager:
     def save_metadata(self) -> None:
         """Write metadata.json to the output directory."""
         metadata = {
-            "version": "0.1.0",
+            "version": __version__,
             "dex_files": [
                 {
                     "filename": f.filename,
