@@ -98,7 +98,15 @@ class DeviceConnector:
                 self._session = self.device.attach(target)
             else:
                 self.logger.info("CORE", f"Attaching to {target}...")
-                self._session = self.device.attach(target)
+                try:
+                    self._session = self.device.attach(target)
+                except frida.ProcessNotFoundError:
+                    pid = self._resolve_package_pid(target)
+                    if pid:
+                        self.logger.info("CORE", f"Resolved {target} to PID {pid}")
+                        self._session = self.device.attach(pid)
+                    else:
+                        raise
             return self._session
         except frida.ProcessNotFoundError:
             raise ProcessNotFoundError(
@@ -107,6 +115,17 @@ class DeviceConnector:
             )
         except Exception as e:
             raise DeviceError(f"Failed to attach: {e}")
+
+    def _resolve_package_pid(self, package: str) -> int | None:
+        """Resolve a package identifier to PID via the applications list."""
+        try:
+            apps = self.device.enumerate_applications(scope="minimal")
+            for app in apps:
+                if app.identifier == package and app.pid:
+                    return app.pid
+        except Exception:
+            pass
+        return None
 
     def spawn_and_attach(self, package: str) -> frida.core.Session:
         """Spawn the app and attach to it.
